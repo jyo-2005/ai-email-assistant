@@ -1,0 +1,22 @@
+name: MailMind AI
+description: AI-powered email classification and action system
+version: 1.0
+
+tasks:
+  - name: easy
+    description: Classify email as spam or important
+
+  - name: medium
+    description: Classify email and decide action
+
+  - name: hard
+    description: Generate appropriate reply
+
+endpoints:
+  reset: /reset
+  step: /step
+  state: /state
+
+metadata:
+  author: Jyothi
+  domain: Email Automation

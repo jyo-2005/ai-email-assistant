@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MailMind AI</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 420px;
+            margin: auto;
+            box-shadow: 0px 5px 20px rgba(0,0,0,0.3);
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .spam {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        .important {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .loading {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .history {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .history-item {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>📧 MailMind AI</h1>
+    <p>Real-time AI Email Assistant</p>
+
+    <input 
+        id="emailInput" 
+        type="text" 
+        placeholder="Paste email content here..."
+    />
+
+    <br><br>
+
+    <button onclick="analyzeEmail()">Analyze</button>
+
+    <div id="resultBox" class="result"></div>
+
+    <div id="history" class="history">
+        <h3>History</h3>
+    </div>
+</div>
+
+<script>
+async function analyzeEmail() {
+    let email = document.getElementById("emailInput").value;
+    let resultBox = document.getElementById("resultBox");
+
+    if (!email) {
+        resultBox.innerHTML = "⚠️ Please enter email content";
+        return;
+    }
+
+    // 🔄 Loading state
+    resultBox.className = "result loading";
+    resultBox.innerHTML = "⏳ Analyzing...";
+
+    try {
+        let response = await fetch("/analyze", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: email })
+        });
+
+        let data = await response.json();
+
+        // 🎨 Color result
+        if (data.label === "spam") {
+            resultBox.className = "result spam";
+        } else {
+            resultBox.className = "result important";
+        }
+
+        resultBox.innerHTML = `
+            <b>Email:</b> ${data.email} <br><br>
+            <b>Label:</b> ${data.label} <br>
+            <b>Action:</b> ${data.action}
+        `;
+
+        // 📜 Add to history
+        let history = document.getElementById("history");
+        let item = document.createElement("div");
+        item.className = "history-item";
+        item.innerText = `${data.label.toUpperCase()} → ${email}`;
+        history.appendChild(item);
+
+    } catch (error) {
+        resultBox.innerHTML = "❌ Error connecting to server";
+    }
+}
+</script>
+
+</body>
+</html>
