@@ -1,35 +1,14 @@
-from env import EmailEnv
 from models import Action
-from grader import grade
 
-def run_baseline():
-    # create environment
-    env = EmailEnv()
+def predict(observation):
+    email_text = observation.email.lower()
 
-    # start environment
-    observation = env.reset()
+    # 🔑 Keywords for spam detection
+    spam_keywords = ["win", "offer", "free", "prize", "click", "urgent"]
 
-    predictions = []
-    labels = [email["label"] for email in env.emails]
+    # 🚫 If spam-like words found → mark as spam
+    if any(word in email_text for word in spam_keywords):
+        return Action(action="spam")
 
-    done = False
-
-    while not done:
-        # simple rule-based logic
-        email_text = observation.email.lower()
-
-        if "win" in email_text or "offer" in email_text:
-            action = Action(action="spam")
-        else:
-            action = Action(action="important")
-
-        # store prediction
-        predictions.append(action.action)
-
-        # take step
-        observation, reward, done, _ = env.step(action)
-
-    # evaluate performance
-    score = grade(predictions, labels)
-
-    print("Baseline Score:", score)
+    # ✅ Otherwise → important
+    return Action(action="important")
