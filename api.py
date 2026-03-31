@@ -18,6 +18,9 @@ except:
 
 app = FastAPI()
 
+# Global environment (for OpenEnv APIs)
+env = EmailEnv()
+
 # -----------------------------
 # 📌 Input Models
 # -----------------------------
@@ -51,18 +54,17 @@ def get_tasks():
 
 @app.get("/baseline")
 def get_baseline():
-    env = EmailEnv()
-    observation = env.reset()
+    env_local = EmailEnv()
+    observation = env_local.reset()
 
     predictions = []
-    labels = [email["label"] for email in env.emails]
+    labels = [email["label"] for email in env_local.emails]
 
     done = False
 
     while not done:
         email_text = observation.email.lower()
 
-        # Simple rule-based AI
         if "win" in email_text or "offer" in email_text:
             action = "spam"
         else:
@@ -70,7 +72,7 @@ def get_baseline():
 
         predictions.append(action)
 
-        observation, reward, done, _ = env.step(Action(action=action))
+        observation, reward, done, *_ = env_local.step(Action(action=action))
 
     score = grade(predictions, labels)
 
@@ -110,7 +112,7 @@ def analyze_email(data: EmailInput):
         )
         return {"result": response.choices[0].message.content}
 
-    # 🟡 Fallback rule-based logic
+    # 🟡 Fallback logic
     keywords = ["offer", "win", "free", "prize", "click", "urgent"]
 
     if any(word in email.lower() for word in keywords):
@@ -125,6 +127,44 @@ def analyze_email(data: EmailInput):
         "label": label,
         "action": action
     }
+
+# -----------------------------
+# 🔁 RESET (OpenEnv)
+# -----------------------------
+
+@app.post("/reset")
+def reset_env():
+    observation = env.reset()
+    return {"observation": observation.__dict__}
+
+# -----------------------------
+# ▶️ STEP (OpenEnv)
+# -----------------------------
+
+@app.post("/step")
+def step_env(action: Action):
+    result = env.step(action)
+
+    if len(result) == 4:
+        observation, reward, done, info = result
+    else:
+        observation, reward, done = result
+        info = {}
+
+    return {
+        "observation": observation.__dict__,
+        "reward": reward,
+        "done": done,
+        "info": info
+    }
+
+# -----------------------------
+# 📦 STATE (OpenEnv)
+# -----------------------------
+
+@app.get("/state")
+def get_state():
+    return {"state": str(env.state)}
 
 # -----------------------------
 # 🌐 UI Route
