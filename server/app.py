@@ -14,7 +14,7 @@ try:
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 except:
-    client = None  # fallback if no API key
+    client = None
 
 app = FastAPI()
 
@@ -49,7 +49,7 @@ def get_tasks():
     return tasks
 
 # -----------------------------
-# 🤖 Baseline AI
+# 🤖 Baseline (Optional)
 # -----------------------------
 
 @app.get("/baseline")
@@ -88,29 +88,32 @@ def run_grader(data: GraderInput):
     return {"score": score}
 
 # -----------------------------
-# 🧠 Analyze Email (REAL-TIME)
+# 🧠 Analyze Email
 # -----------------------------
 
 @app.post("/analyze")
 def analyze_email(data: EmailInput):
     email = data.email
 
-    # 🔥 If OpenAI key exists → use AI
+    # 🔥 Use OpenAI if available
     if client:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Classify email as spam or important and suggest action (reply or ignore)."
-                },
-                {
-                    "role": "user",
-                    "content": email
-                }
-            ]
-        )
-        return {"result": response.choices[0].message.content}
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Classify email as spam or important and suggest action (reply or ignore)."
+                    },
+                    {
+                        "role": "user",
+                        "content": email
+                    }
+                ]
+            )
+            return {"result": response.choices[0].message.content}
+        except:
+            pass  # fallback if API fails
 
     # 🟡 Fallback logic
     keywords = ["offer", "win", "free", "prize", "click", "urgent"]
@@ -159,7 +162,7 @@ def step_env(action: Action):
     }
 
 # -----------------------------
-# 📦 STATE (OpenEnv)
+# 📦 STATE
 # -----------------------------
 
 @app.get("/state")
@@ -174,15 +177,9 @@ def get_state():
 def get_ui():
     return FileResponse("index.html")
 
-
 # -----------------------------
 # 🚀 MAIN ENTRY POINT (REQUIRED)
 # -----------------------------
 
 def main():
-    import uvicorn
-    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
-
-
-if __name__ == "__main__":
-    main()
+    return app
