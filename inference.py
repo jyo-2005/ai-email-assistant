@@ -2,17 +2,24 @@ from env import EmailEnv
 from models import Action
 from grader import grade
 
+# -----------------------------
+# 🤖 PREDICT FUNCTION
+# -----------------------------
 def predict(observation):
-    email_text = observation.email.lower()
+    email = observation.email.lower()
+
     spam_keywords = ["win", "offer", "free", "prize", "click", "urgent"]
 
-    if any(word in email_text for word in spam_keywords):
+    if any(word in email for word in spam_keywords):
         return Action(action="spam")
-    
+
     return Action(action="important")
 
 
-if __name__ == "__main__":
+# -----------------------------
+# 🚀 RUN FUNCTION (IMPORTANT)
+# -----------------------------
+def run():
     env = EmailEnv()
     observation = env.reset()
 
@@ -22,7 +29,7 @@ if __name__ == "__main__":
     labels = [email["label"] for email in env.emails]
 
     done = False
-    step_count = 0
+    step = 0
 
     while not done:
         action = predict(observation)
@@ -30,10 +37,14 @@ if __name__ == "__main__":
         observation, reward, done, _ = env.step(action)
 
         predictions.append(action.action)
-        step_count += 1
+        step += 1
 
-        print(f"[STEP] step={step_count} reward={reward}", flush=True)
+        print(f"[STEP] step={step} reward={reward}", flush=True)
 
     score = grade(predictions, labels)
 
-    print(f"[END] task=email_classification score={score} steps={step_count}", flush=True)
+    print(f"[END] task=email_classification score={score} steps={step}", flush=True)
+
+
+# 🔥 IMPORTANT: FORCE EXECUTION
+run()
