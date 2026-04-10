@@ -1,10 +1,16 @@
 def grade(predictions, labels):
-    total = len(labels)
-    correct = 0
+    correct = sum([p == l for p, l in zip(predictions, labels)])
+    return correct / len(labels)
 
-    for p, l in zip(predictions, labels):
-        if p == l:
-            correct += 1
 
-    score = correct / total
-    return score
+# Task-specific graders
+def grade_easy(predictions, labels):
+    return grade(predictions, labels)
+
+
+def grade_medium(predictions, labels):
+    return grade(predictions, labels)
+
+
+def grade_hard(predictions, labels):
+    return grade(predictions, labels)
