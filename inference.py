@@ -5,7 +5,7 @@ from models import Action
 from grader import grade
 
 # -----------------------------
-# 🔑 Setup LLM (MANDATORY)
+# 🔑 LLM Setup (MANDATORY)
 # -----------------------------
 client = OpenAI(
     base_url=os.environ.get("API_BASE_URL"),
@@ -13,12 +13,11 @@ client = OpenAI(
 )
 
 # -----------------------------
-# 🤖 PREDICT FUNCTION
+# 🤖 Predict Function
 # -----------------------------
 def predict(observation):
     email = observation.email
 
-    # 🔥 TRY LLM FIRST
     try:
         response = client.chat.completions.create(
             model=os.environ.get("MODEL_NAME", "gpt-4o-mini"),
@@ -42,8 +41,8 @@ def predict(observation):
         else:
             return Action(action="important")
 
-    except Exception as e:
-        # ⚠️ VERY IMPORTANT: fallback (prevents crash)
+    except:
+        # fallback logic
         email_text = email.lower()
         spam_keywords = ["win", "offer", "free", "prize", "click", "urgent"]
 
@@ -54,34 +53,37 @@ def predict(observation):
 
 
 # -----------------------------
-# 🚀 RUN ENVIRONMENT
+# 🚀 RUN ALL TASKS
 # -----------------------------
 def run():
-    env = EmailEnv()
-    observation = env.reset()
+    task_list = ["easy", "medium", "hard"]
 
-    print("[START] task=email_classification", flush=True)
+    for task in task_list:
+        env = EmailEnv()
+        observation = env.reset()
 
-    predictions = []
-    labels = [email["label"] for email in env.emails]
+        print(f"[START] task={task}", flush=True)
 
-    done = False
-    step = 0
+        predictions = []
+        labels = [email["label"] for email in env.emails]
 
-    while not done:
-        action = predict(observation)
+        done = False
+        step = 0
 
-        observation, reward, done, _ = env.step(action)
+        while not done:
+            action = predict(observation)
 
-        predictions.append(action.action)
-        step += 1
+            observation, reward, done, _ = env.step(action)
 
-        print(f"[STEP] step={step} reward={reward}", flush=True)
+            predictions.append(action.action)
+            step += 1
 
-    score = grade(predictions, labels)
+            print(f"[STEP] step={step} reward={reward}", flush=True)
 
-    print(f"[END] task=email_classification score={score} steps={step}", flush=True)
+        score = grade(predictions, labels)
+
+        print(f"[END] task={task} score={score} steps={step}", flush=True)
 
 
-# 🔥 FORCE RUN
+# 🔥 FORCE EXECUTION
 run()
