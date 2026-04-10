@@ -1,23 +1,47 @@
+import os
+from openai import OpenAI
 from env import EmailEnv
 from models import Action
 from grader import grade
 
 # -----------------------------
-# 🤖 PREDICT FUNCTION
+# 🔑 Setup LLM (MANDATORY)
+# -----------------------------
+client = OpenAI(
+    base_url=os.environ["API_BASE_URL"],   # REQUIRED
+    api_key=os.environ["API_KEY"]          # REQUIRED
+)
+
+# -----------------------------
+# 🤖 PREDICT USING LLM
 # -----------------------------
 def predict(observation):
-    email = observation.email.lower()
+    email = observation.email
 
-    spam_keywords = ["win", "offer", "free", "prize", "click", "urgent"]
+    response = client.chat.completions.create(
+        model=os.environ.get("MODEL_NAME", "gpt-4o-mini"),
+        messages=[
+            {
+                "role": "system",
+                "content": "Classify email as spam or important. Reply only 'spam' or 'important'."
+            },
+            {
+                "role": "user",
+                "content": email
+            }
+        ]
+    )
 
-    if any(word in email for word in spam_keywords):
+    result = response.choices[0].message.content.strip().lower()
+
+    if "spam" in result:
         return Action(action="spam")
-
+    
     return Action(action="important")
 
 
 # -----------------------------
-# 🚀 RUN FUNCTION (IMPORTANT)
+# 🚀 RUN ENVIRONMENT
 # -----------------------------
 def run():
     env = EmailEnv()
@@ -46,5 +70,5 @@ def run():
     print(f"[END] task=email_classification score={score} steps={step}", flush=True)
 
 
-# 🔥 IMPORTANT: FORCE EXECUTION
+# 🔥 FORCE RUN
 run()
